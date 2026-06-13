@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Good Thing 音源數據觀測儀表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .song-card {
+            background: #1e1e1e; /* 改為深灰色 */
+            color: #fff;        /* 文字改為白色 */
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15); /* 調整陰影 */
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .song-info h1 { margin: 0 0 8px 0; font-size: 24px; }
+        .song-info p { margin: 0; color: #aaa; font-size: 14px; } /* 調整副標題顏色 */
+        .stats-overview { display: flex; gap: 20px; }
+        .stat-box { text-align: right; }
+        .stat-box .label { font-size: 12px; color: #aaa; } /* 調整標籤顏色 */
+        .stat-box .value { font-size: 20px; font-weight: bold; color: #00cd3c; }
+
+        .chart-card {
+            background: #1e1e1e; /* 改為深灰色 */
+            color: #fff;        /* 文字改為白色 */
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15); /* 調整陰影 */
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .chart-title { font-size: 18px; font-weight: bold; }
+        .btn-group { display: flex; gap: 5px; }
+        .btn {
+            background: #eee;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn.active { background: #00cd3c; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="song-card">
+        <div class="song-info">
+            <h1 id="songTitle">Good Thing</h1>
+            <p id="artistName">i-dle*</p>
+        </div>
+        <div class="stats-overview">
+            <div class="stat-box">
+                <div class="label">目前總累積收聽量</div>
+                <div class="value" id="totalListeners">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="chart-title">收聽量動態趨勢曲線</div>
+            <div class="btn-group">
+                <button class="btn" onclick="updatePeriod(7)">7天</button>
+                <button class="btn" onclick="updatePeriod(14)">14天</button>
+                <button class="btn active" onclick="updatePeriod(0)">全部</button>
+            </div>
+        </div>
+        <canvas id="trendChart"></canvas>
+    </div>
+
+</div>
+
+<script>
+// 1. 請在此處貼上您從 Google 試算表複製的 CSV 網址
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSK6iUeL_Nrc6YHQCw4_jmAsbiXL1B2zO6kiKx_WXk-KX8HSIsoVzvelwLxt7w7wR_-toYnoYGJApn9/pub?gid=1703196335&single=true&output=csv";
+
+const ctx = document.getElementById('trendChart').getContext('2d');
+let trendChart;
+let rawData = [];
+
+// 2. 自動讀取並解析 Google 試算表資料
+async function fetchSpreadsheetData() {
+    try {
+        const response = await fetch(csvUrl);
+        const csvText = await response.text();
+        
+        // 解析 CSV 每一行
+        const rows = csvText.split('\n').map(row => row.split(','));
+        
+        // 假設第一行是標題，從第二行開始抓取
+        // 請確保您的試算表欄位順序與程式碼對應（例如：A欄日期、B欄每日、C欄總累積）
+        rawData = [];
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.length < 3 || !row[0]) continue; // 跳過空行
+            
+            rawData.push({
+                date: row[0].trim(),                     // A欄：日期（如：5月19日）
+                daily: parseInt(row[2].replace(/,/g, '')) || 0, // B欄：每日收聽量
+                total: parseInt(row[1].replace(/,/g, '')) || 0  // C欄：總累積收聽量
+            });
+        }
+
+        // 更新數據與圖表
+        if (rawData.length > 0) {
+            const latestTotal = rawData[rawData.length - 1].total;
+            document.getElementById('totalListeners').innerText = latestTotal.toLocaleString() + " 次";
+            renderChart(0); // 預設載入全部數據
+        }
+    } catch (error) {
+        console.error("無法讀取試算表資料：", error);
+    }
+}
+
+function renderChart(days) {
+    const displayData = days === 0 ? rawData : rawData.slice(-days);
+    
+    const labels = displayData.map(d => d.date);
+    const dailyDataset = displayData.map(d => d.daily);
+    const totalDataset = displayData.map(d => d.total);
+
+    if (trendChart) { trendChart.destroy(); }
+
+    trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '每日收聽量 (Daily)',
+                    data: dailyDataset,
+                    borderColor: '#00cd3c',
+                    backgroundColor: 'rgba(0, 205, 60, 0.08)',
+                    yAxisID: 'yDaily',
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: '總累積收聽量 (Total)',
+                    data: totalDataset,
+                    borderColor: '#4a90e2',
+                    backgroundColor: 'transparent',
+                    yAxisID: 'yTotal',
+                    tension: 0.1,
+                    borderDash: [4, 4]
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                yDaily: {
+                    type: 'linear',
+                    position: 'left',
+                    title: { 
+                        display: true, 
+                        text: '每日收聽人數', 
+                        color: '#aaa',
+                        rotation: 0 // 轉為 0 度（水平正向）
+                    },
+                    ticks: { color: '#aaa', callback: val => val.toLocaleString() }
+                },
+                yTotal: {
+                    type: 'linear',
+                    position: 'right',
+                    title: { 
+                        display: true, 
+                        text: '累積總收聽', 
+                        color: '#aaa',
+                        rotation: 0 // 轉為 0 度（水平正向）
+                    },
+                    ticks: { color: '#aaa', callback: val => val.toLocaleString() },
+                    grid: { drawOnChartArea: false }
+                },
+                x: {
+                    ticks: { color: '#aaa' }
+                }
+            }
+        }
+    });
+}
+
+function updatePeriod(days) {
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    renderChart(days);
+}
+
+// 啟動時自動抓取試算表
+fetchSpreadsheetData();
+</script>
+</body>
+</html>
