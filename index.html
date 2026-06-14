@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Good Thing 音源數據儀表板</title>
+    <title>MONO 音源數據儀表板</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -19,59 +19,59 @@
             max-width: 1000px;
             margin: 0 auto;
         }
-        /* 修改原本的 .song-card，增加 flex-direction */
-.song-card {
-    background: #1e1e1e;
-    color: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column; /* 改為垂直排列 */
-    align-items: flex-start; /* 靠左對齊 */
-    gap: 20px;
-}
+/* 修改原本的 .song-card，增加 flex-direction */
+        .song-card {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column; /* 改為垂直排列 */
+            align-items: stretch;
+            gap: 20px;
+        }
 
-.stats-container {
-    display: flex;
-    justify-content: space-between; /* 均分空間 */
-    width: 100%; /* 確保撐滿寬度 */
-    gap: 10px;
-}
+        /* 新增：專門管理歌名與右側圖片的橫向區塊 */
+        .song-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
 
-/* 手機版響應式優化 */
-@media (max-width: 600px) {
-    body { padding: 10px; }
-    
-    .song-card { padding: 15px; }
-    
-    .song-info h2 { font-size: 20px; }
-    
-    .stat-box {
-        text-align: center; /* 手機版改為置中更美觀 */
-    }
-    
-    .stat-box .value { font-size: 16px; }
-    .stat-box .label { font-size: 10px; }
-    
-    /* 隱藏圖表標題的長文字，避免破版 */
-    .chart-title { font-size: 14px; }
-    .btn { padding: 4px 8px; font-size: 10px; }
-}
+        .song-info h2 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+        }
 
-.song-info p {
-    margin: 0;
-    color: #aaa;
-    font-size: 14px;
-}
+        .song-info p {
+            margin: 0;
+            color: #aaa;
+            font-size: 14px;
+        }
 
-/* 新增：中間與右側數據區塊的統一容器 */
-.stats-container {
-    display: flex;
-    align-items: center;
-    gap: 30px; /* 每個方塊之間的間距 */
-}
+        /* 新增：歌曲封面圖片樣式 (長寬體、不切割) */
+        .song-cover {
+            width: 70%;
+            max-width: 1000px;
+            min-width: 100px;
+            height: 10%;
+            object-fit: contain;     /* 保持長寬比例，不切割圖片 */
+            border-radius: 6px;      /* 精緻微圓角 */
+            background-color: #2a2a2a; /* 圖片載入前或比例不符時的襯底背景 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            flex-shrink: 0;          /* 防止圖片被擠壓變形 */
+            margin-left: 15px;
+        }
+        /* 新增：中間與右側數據區塊的統一容器 */
+        .stats-container {
+            display: flex;
+            justify-content: space-between; /* 均分空間 */
+            width: 100%; /* 確保撐滿寬度 */
+            gap: 10px;
+        }
 
 /* 數據方塊基本設計 */
 .stat-box {
@@ -130,7 +130,7 @@
     background: rgba(30, 30, 30, 0.95); /* 深灰色背景 */
     border: 2px solid #00cd3c; /* 經典亮綠色邊框 */
     border-radius: 12px;
-    padding: 15px;
+    padding: 0px;/* 將原本的 20px 上下內距縮減為 0px */
     margin: 10px 0 20px 0;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
     animation: pulse 2s infinite;
@@ -159,6 +159,26 @@
 
 .warning-content b {
     color: #00cd3c;
+}
+
+/* 手機版響應式優化 */
+@media (max-width: 600px) {
+    body { padding: 10px; }
+    
+    .song-card { padding: 15px; }
+    
+    .song-info h2 { font-size: 20px; }
+    
+    .stat-box {
+        text-align: center; /* 手機版改為置中更美觀 */
+    }
+    
+    .stat-box .value { font-size: 16px; }
+    .stat-box .label { font-size: 10px; }
+    
+    /* 隱藏圖表標題的長文字，避免破版 */
+    .chart-title { font-size: 14px; }
+    .btn { padding: 4px 8px; font-size: 10px; }
 }
 
 /* 動態特效 */
@@ -198,7 +218,7 @@
 
 <div id="rotateWarning" class="orientation-warning">
     <div class="warning-content">
-        <img src="https://i-dle-melon.github.io/My-Test/icon.png" alt="" class="guide-img">
+        <img src="https://i-dle-melon.github.io/MONO/icon.png" alt="" class="guide-img">
 <p>為了獲得最佳的圖表使用體驗，建議將手機轉為<b>橫螢幕</b>使用唷！</p>
     </div>
 </div>
@@ -213,9 +233,12 @@
 
     <div class="song-card">
     <div class="song-info">
-        <h2 id="songTitle">Good Thing</h2>
+      <img src="https://i-dle-melon.github.io/MONO/MONO.png"class="song-cover" alt="歌曲封面">
+      <div class="song-text">
+        <h2 id="songTitle">MONO</h2>
         <p id="songArtist">i-dle*</p>
     </div>
+</div>
 
     <div class="stats-container">
         <div class="stat-box">
@@ -239,7 +262,7 @@
 
     <div class="chart-card">
         <div class="chart-header">
-            <div class="chart-title">收聽量動態趨勢曲線</div>
+            <div class="chart-title">收聽量動態趨勢曲線 <span style="color: #888888;font-size: 12px;">--- 點曲線查看每日音源</span></div>
             <div class="btn-group">
                 <button class="btn" onclick="updatePeriod(7)">7天</button>
                 <button class="btn" onclick="updatePeriod(14)">14天</button>
@@ -257,7 +280,7 @@
 <script>
 // ================= 配置區 =================
 // 請貼上你從 Google 試算表發布的 CSV 網址
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSK6iUeL_Nrc6YHQCw4_jmAsbiXL1B2zO6kiKx_WXk-KX8HSIsoVzvelwLxt7w7wR_-toYnoYGJApn9/pub?gid=1703196335&single=true&output=csv";
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcKEulpVExKvh0cwgz21GOK5onAwclPzQlq_nfb_W8-NnwixccEEKgeGcMXQlMAXjYmbw53-fB_usI/pub?gid=1703196335&single=true&output=csv";
 // ==========================================
 
 const ctx = document.getElementById('trendChart').getContext('2d');
@@ -648,3 +671,6 @@ window.addEventListener('resize', checkOrientation);
 </script>
 </body>
 </html>
+<footer class="site-footer">
+    <p>© 2026 <a href="https://line.me/ti/g2/lquJYJWOJudOLkUti7prCFNeSbvKF2vn2AdEYQ?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank">i-dle西瓜攤</a>GigiBoss. All rights reserved. Designed & Maintained by GigiBoss</p>
+</footer>
